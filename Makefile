@@ -65,3 +65,6 @@ test: build setup
 setup:
 	@mkdir -p bin/darwin bin/linux
 	@if [ ! -L $$PWD/bin/darwin/ddev ] ; then ln -s $$PWD/bin/darwin/darwin_amd64/ddev $$PWD/bin/darwin/ddev; fi
+
+debug:
+	export BUILD_FLAGS='$(LDFLAGS)'
