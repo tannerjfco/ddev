@@ -12,8 +12,7 @@
             "program": "${workspaceRoot}/cmd/ddev",
             "env": {},
             "args": ["version"],
-            "preLaunchTask": "make",
-            "buildFlags": "-installsuffix 'static' -ldflags \"$(BUILD_FLAGS)\"",
+            "buildFlags": "-installsuffix static",
             "showLog": true
         }
     ]
