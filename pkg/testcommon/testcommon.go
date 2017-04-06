@@ -2,13 +2,14 @@ package testcommon
 
 import (
 	"bytes"
-	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/drud/drud-go/utils/system"
 )
@@ -17,9 +18,13 @@ import (
 type TestSite struct {
 	// Name is the generic name of the site, and is used as the default dir.
 	Name string
-	// DownloadURL is the URL of the tarball to be used for building the site.
-	DownloadURL string
-	Dir         string
+	// SourceURL is the URL of the source code tarball to be used for building the site.
+	SourceURL string
+	// FileURL is the URL of the archive of file uploads used for testing file import.
+	FileURL string
+	// DBURL is the URL of the database dump tarball used for testing database import.
+	DBURL string
+	Dir   string
 }
 
 func (site *TestSite) archivePath() string {
@@ -34,9 +39,9 @@ func (site *TestSite) Prepare() error {
 	log.Debugf("Prepping test for %s.\n", site.Name)
 	os.Setenv("DRUD_NONINTERACTIVE", "true")
 
-	log.Debugln("Downloading file:", site.DownloadURL)
+	log.Debugln("Downloading file:", site.SourceURL)
 	tarballPath := site.archivePath()
-	err := system.DownloadFile(tarballPath, site.DownloadURL)
+	err := system.DownloadFile(tarballPath, site.SourceURL)
 
 	if err != nil {
 		site.Cleanup()
@@ -159,4 +164,25 @@ func CaptureStdOut() func() string {
 
 func setLetterBytes(lb string) {
 	letterBytes = lb
+}
+
+// ClearDockerEnv unsets env vars set in platform DockerEnv() so that
+// they can be set by another test run.
+func ClearDockerEnv() {
+	envVars := []string{
+		"COMPOSE_PROJECT_NAME",
+		"DDEV_SITENAME",
+		"DDEV_DBIMAGE",
+		"DDEV_WEBIMAGE",
+		"DDEV_APPROOT",
+		"DDEV_DOCROOT",
+		"DDEV_URL",
+		"DDEV_HOSTNAME",
+	}
+	for _, env := range envVars {
+		err := os.Unsetenv(env)
+		if err != nil {
+			log.Printf("failed to unset %s: %v\n", env, err)
+		}
+	}
 }
