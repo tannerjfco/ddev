@@ -18,9 +18,13 @@ import (
 type TestSite struct {
 	// Name is the generic name of the site, and is used as the default dir.
 	Name string
-	// DownloadURL is the URL of the tarball to be used for building the site.
-	DownloadURL string
-	Dir         string
+	// SourceURL is the URL of the source code tarball to be used for building the site.
+	SourceURL string
+	// FileURL is the URL of the archive of file uploads used for testing file import.
+	FileURL string
+	// DBURL is the URL of the database dump tarball used for testing database import.
+	DBURL string
+	Dir   string
 }
 
 func (site *TestSite) archivePath() string {
@@ -34,10 +38,10 @@ func (site *TestSite) Prepare() error {
 		log.Fatalf("Could not create temporary directory %s for site %s", testDir, site.Name)
 	}
 	site.Dir = testDir
-	fmt.Printf("Prepping test for %s.", site.Name)
+	fmt.Printf("Prepping test for %s.\n", site.Name)
 	os.Setenv("DRUD_NONINTERACTIVE", "true")
 
-	err = system.DownloadFile(site.archivePath(), site.DownloadURL)
+	err = system.DownloadFile(site.archivePath(), site.SourceURL)
 	if err != nil {
 		site.Cleanup()
 		return err
@@ -141,4 +145,25 @@ func CaptureStdOut() func() string {
 
 func setLetterBytes(lb string) {
 	letterBytes = lb
+}
+
+// ClearDockerEnv unsets env vars set in platform DockerEnv() so that
+// they can be set by another test run.
+func ClearDockerEnv() {
+	envVars := []string{
+		"COMPOSE_PROJECT_NAME",
+		"DDEV_SITENAME",
+		"DDEV_DBIMAGE",
+		"DDEV_WEBIMAGE",
+		"DDEV_APPROOT",
+		"DDEV_DOCROOT",
+		"DDEV_URL",
+		"DDEV_HOSTNAME",
+	}
+	for _, env := range envVars {
+		err := os.Unsetenv(env)
+		if err != nil {
+			log.Printf("failed to unset %s: %v\n", env, err)
+		}
+	}
 }
