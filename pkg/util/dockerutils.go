@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -9,6 +10,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/docker/libcompose/config"
+	compose "github.com/docker/libcompose/docker"
+	"github.com/docker/libcompose/docker/ctx"
+	"github.com/docker/libcompose/project"
+	"github.com/docker/libcompose/project/options"
 	"github.com/drud/drud-go/utils/try"
 	"github.com/fsouza/go-dockerclient"
 )
@@ -213,4 +219,32 @@ func GetContainerHealth(container docker.APIContainers) string {
 		match = strings.TrimPrefix(match, pre)
 	}
 	return match
+}
+
+func ComposeProject(files []string) error {
+	net := map[string]*config.NetworkConfig{
+		"ddev_default": {},
+	}
+
+	projectConfig := &project.Project{
+		NetworkConfigs: net,
+	}
+
+	composeProject, err := compose.NewProject(&ctx.Context{
+		Context: project.Context{
+			ComposeFiles: files,
+			Project:      projectConfig,
+		},
+	}, nil)
+
+	if err != nil {
+		return err
+	}
+
+	err = composeProject.Up(context.Background(), options.Up{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

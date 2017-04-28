@@ -292,11 +292,12 @@ func (l *LocalApp) Start() error {
 		log.Fatal(err)
 	}
 
-	return dockerutil.DockerCompose(
-		"-f", composePath,
-		"up",
-		"-d",
-	)
+	// return dockerutil.DockerCompose(
+	// 	"-f", composePath,
+	// 	"up",
+	// 	"-d",
+	// )
+	return util.ComposeProject([]string{composePath})
 }
 
 // DockerEnv sets environment variables for a docker-compose run.
