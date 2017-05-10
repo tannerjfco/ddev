@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -104,14 +104,14 @@ func EnsureDockerRouter() {
 	if err != nil {
 		log.Fatal("could not get home directory for current user. is it set?")
 	}
-	routerdir := path.Join(userHome, ".ddev")
+	routerdir := filepath.Join(userHome, ".ddev")
 	err = os.MkdirAll(routerdir, 0755)
 	if err != nil {
 		log.Fatalf("unable to create directory for ddev router: %s", err)
 	}
 
 	var doc bytes.Buffer
-	dest := path.Join(routerdir, "router-compose.yaml")
+	dest := filepath.Join(routerdir, "router-compose.yaml")
 	f, ferr := os.Create(dest)
 	if ferr != nil {
 		log.Fatal(ferr)
@@ -193,7 +193,7 @@ func CheckForConf(confPath string) (string, error) {
 	pathList := strings.Split(confPath, "/")
 
 	for _ = range pathList {
-		confPath = path.Dir(confPath)
+		confPath = filepath.Dir(confPath)
 		if system.FileExists(confPath + "/.ddev/config.yaml") {
 			return confPath, nil
 		}
