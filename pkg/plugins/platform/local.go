@@ -409,7 +409,10 @@ func (l *LocalApp) Start() error {
 		return err
 	}
 
-	StartDdevRouter()
+	err = StartDdevRouter()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
