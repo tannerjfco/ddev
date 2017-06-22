@@ -152,6 +152,15 @@ func (l *LocalApp) ImportDB(imPath string, extPath string) error {
 	var extPathPrompt bool
 	dbPath := filepath.Join(l.AppRoot(), ".ddev", "data")
 
+	preCmds := l.AppConfig.Commands["pre-import-db"]
+	if len(preCmds) > 0 {
+		fmt.Println("Executing pre-import commands...")
+		err := l.ProcessHook(preCmds)
+		if err != nil {
+			return err
+		}
+	}
+
 	err := fileutil.PurgeDirectory(dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to cleanup .ddev/data before import: %v", err)
@@ -245,6 +254,15 @@ func (l *LocalApp) ImportDB(imPath string, extPath string) error {
 		return fmt.Errorf("failed to cleanup .ddev/data after import: %v", err)
 	}
 
+	postCmds := l.AppConfig.Commands["post-import-db"]
+	if len(postCmds) > 0 {
+		fmt.Println("Executing post-import commands...")
+		err := l.ProcessHook(postCmds)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -292,6 +310,15 @@ func (l *LocalApp) ImportFiles(imPath string, extPath string) error {
 	var extPathPrompt bool
 
 	l.DockerEnv()
+
+	preCmds := l.AppConfig.Commands["pre-import-files"]
+	if len(preCmds) > 0 {
+		fmt.Println("Executing pre-start commands...")
+		err := l.ProcessHook(preCmds)
+		if err != nil {
+			return err
+		}
+	}
 
 	if imPath == "" {
 		// ensure we prompt for extraction path if an archive is provided, while still allowing
@@ -377,6 +404,15 @@ func (l *LocalApp) ImportFiles(imPath string, extPath string) error {
 		}
 	}
 
+	postCmds := l.AppConfig.Commands["post-import-files"]
+	if len(postCmds) > 0 {
+		fmt.Println("Executing post-import commands...")
+		err := l.ProcessHook(postCmds)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -411,9 +447,44 @@ func (l *LocalApp) ComposeFiles() []string {
 	return files
 }
 
+// ProcessHook executes commands defined in a ddevapp.Command
+func (l *LocalApp) ProcessHook(commands []ddevapp.Command) error {
+	var err error
+	for _, c := range commands {
+		if c.ImportDB.Src != "" {
+			fmt.Println("--Importing database from ", c.ImportDB.Src, "--")
+			err = l.ImportDB(c.ImportDB.Src, "")
+			if err != nil {
+				return err
+			}
+			util.Success("--Database import succeeded--")
+		}
+		if c.Exec != "" {
+			fmt.Println("--Runing exec: ", c.Exec, "--")
+			args := strings.Split(c.Exec, " ")
+			err = l.Exec("web", true, args...)
+			if err != nil {
+				return err
+			}
+			util.Success("--Exec command succeeded--")
+		}
+	}
+
+	return nil
+}
+
 // Start initiates docker-compose up
 func (l *LocalApp) Start() error {
 	l.DockerEnv()
+
+	preCmds := l.AppConfig.Commands["pre-start"]
+	if len(preCmds) > 0 {
+		fmt.Println("Executing pre-start commands...")
+		err := l.ProcessHook(preCmds)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Write docker-compose.yaml (if it doesn't exist).
 	// If the user went through the `ddev config` process it will be written already, but
@@ -443,6 +514,15 @@ func (l *LocalApp) Start() error {
 	err = l.Wait("web", "db")
 	if err != nil {
 		return err
+	}
+
+	postCmds := l.AppConfig.Commands["post-start"]
+	if len(postCmds) > 0 {
+		fmt.Println("Executing post-start commands...")
+		err := l.ProcessHook(postCmds)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
