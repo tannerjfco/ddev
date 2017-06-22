@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/drud/ddev/pkg/ddevapp"
 	"github.com/drud/ddev/pkg/dockerutil"
 	"github.com/drud/ddev/pkg/fileutil"
 	"github.com/drud/ddev/pkg/testcommon"
@@ -375,12 +376,36 @@ func TestLocalLogs(t *testing.T) {
 func TestProcessHooks(t *testing.T) {
 	assert := assert.New(t)
 
-	app, err := GetPluginApp("local")
-	assert.NoError(err)
-
 	for _, site := range TestSites {
 		cleanup := site.Chdir()
 		runTime := testcommon.TimeTrack(time.Now(), fmt.Sprintf("%s ProcessHooks", site.Name))
+
+		testcommon.ClearDockerEnv()
+		conf, err := ddevapp.NewConfig(site.Dir)
+		assert.NoError(err)
+
+		conf.Commands = map[string][]ddevapp.Command{
+			"hook-test": []ddevapp.Command{
+				ddevapp.Command{
+					Exec: "pwd",
+				},
+				ddevapp.Command{},
+				ddevapp.Command{},
+			},
+		}
+		conf.Commands["hook-test"][1].ImportDB.Src = site.DBTarURL
+		conf.Commands["hook-test"][2].ImportFiles.Src = site.DBTarURL
+
+		l := &LocalApp{
+			AppConfig: conf,
+		}
+
+		err = l.ProcessHooks(l.AppConfig.Commands["hook-test"])
+		assert.NoError(err)
+
+		runTime()
+		cleanup()
+
 	}
 }
 
