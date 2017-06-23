@@ -49,7 +49,7 @@ type Config struct {
 	AppRoot          string               `yaml:"-"`
 	Platform         string               `yaml:"-"`
 	SiteSettingsPath string               `yaml:"-"`
-	Commands         map[string][]Command `yaml:"extend_commands"`
+	Commands         map[string][]Command `yaml:"extend-commands"`
 }
 
 // Command defines commands to be run as pre/post hooks
@@ -103,6 +103,16 @@ func (c *Config) Write() error {
 	cfgbytes, err := yaml.Marshal(c)
 	if err != nil {
 		return err
+	}
+
+	cfgbytes = append(cfgbytes, []byte(HookTemplate)...)
+	switch c.AppType {
+	case "drupal8":
+		cfgbytes = append(cfgbytes, []byte(Drupal8Hooks)...)
+	case "drupal7":
+		cfgbytes = append(cfgbytes, []byte(Drupal7Hooks)...)
+	case "wordpress":
+		cfgbytes = append(cfgbytes, []byte(WordPressHooks)...)
 	}
 
 	log.WithFields(log.Fields{
