@@ -49,7 +49,7 @@ type Config struct {
 	AppRoot          string               `yaml:"-"`
 	Platform         string               `yaml:"-"`
 	SiteSettingsPath string               `yaml:"-"`
-	Commands         map[string][]Command `yaml:"extend-commands"`
+	Commands         map[string][]Command `yaml:"extend-commands,omitempty"`
 }
 
 // Command defines commands to be run as pre/post hooks
