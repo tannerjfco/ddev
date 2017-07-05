@@ -30,6 +30,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"github.com/gosuri/uitable"
 	"github.com/lextoumbourou/goodhosts"
+	shellwords "github.com/mattn/go-shellwords"
 )
 
 const containerWaitTimeout = 35
@@ -546,13 +547,20 @@ func (l *LocalApp) Start() error {
 func (l *LocalApp) Exec(service string, tty bool, cmd ...string) error {
 	l.DockerEnv()
 
+	cmdString := strings.Join(cmd, " ")
+
+	args, err := shellwords.Parse(cmdString)
+	if err != nil {
+		return err
+	}
+
 	var exec []string
 	if tty {
 		exec = []string{"exec", "-T", service}
 	} else {
 		exec = []string{"exec", service}
 	}
-	exec = append(exec, cmd...)
+	exec = append(exec, args...)
 
 	return dockerutil.ComposeCmd(l.ComposeFiles(), exec...)
 }
