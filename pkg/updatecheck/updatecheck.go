@@ -2,6 +2,7 @@ package updatecheck
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"time"
@@ -15,7 +16,9 @@ import (
 
 // AvailableUpdates returns true (along with a release URL) if there is an update available in the specified repo which is newer than the currentVersion string.
 func AvailableUpdates(repoOrg string, repoName string, currentVersion string) (bool, string, error) {
-	client := github.NewClient(nil)
+	client := github.NewClient(&http.Client{
+		Timeout: 3 * time.Second,
+	})
 	opt := &github.ListOptions{Page: 1}
 	releases, _, err := client.Repositories.ListReleases(context.Background(), repoOrg, repoName, opt)
 	if err != nil {

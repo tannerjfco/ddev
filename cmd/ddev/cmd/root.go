@@ -61,6 +61,10 @@ var RootCmd = &cobra.Command{
 			util.Warning("Could not perform update check: %v", err)
 		}
 
+		if os.Getenv("DDEV_NO_UPDATE_CHECK") != "" {
+			timeToCheckForUpdates = false
+		}
+
 		if timeToCheckForUpdates {
 			// nolint: vetshadow
 			updateNeeded, updateURL, err := updatecheck.AvailableUpdates("drud", "ddev", version.DdevVersion)
